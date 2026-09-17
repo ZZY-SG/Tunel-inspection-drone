@@ -69,7 +69,6 @@ private:
 	void handleRebaseComplete(const vehicle_command_s &command, uint16_t request_id);
 	void enterTopApproach();
 	void enterContactVerify(hrt_abstime now);
-	void enterMotorTrimWait(hrt_abstime now);
 	void enterContactPress(hrt_abstime now);
 	void beginHandover(uint8_t reason, uint16_t handover_id, uint8_t target_system,
 			   uint16_t target_component, bool notify_pending);
@@ -84,7 +83,6 @@ private:
 	void updateFilteredTopDistance();
 	bool isPrecontactState() const;
 	float verticalVelocityNed() const;
-	float trimHoldDistance() const;
 	float constrainedTrimTime(float available_time_s) const;
 	void resetMotorTrim();
 	void resetMotorTrimCandidate(MotorTrimCandidate &candidate);
@@ -92,13 +90,8 @@ private:
 	void updateMotorTrimCandidate(MotorTrimCandidate &candidate, hrt_abstime now, bool loose,
 				      float required_time_s, const char *name);
 	bool motorTrimSampleValid(hrt_abstime now, bool loose, uint16_t &sample_mask) const;
-	bool anyMotorTrimCandidateValid() const;
 	void selectBestMotorTrim();
-	bool updateMotorTrimSafety(hrt_abstime now);
 	const char *motorTrimSourceName(MotorTrimSource source) const;
-	bool motorTrimWaitSampleStable(hrt_abstime now) const;
-	void updateMotorTrimWhileWaiting(hrt_abstime now);
-	bool motorTrimMatchesCurrent(hrt_abstime now) const;
 	bool directActuatorReady(hrt_abstime now) const;
 	bool preparePressHandover(hrt_abstime now);
 	void publishDirectMotorSetpoint(hrt_abstime now);
@@ -159,25 +152,18 @@ private:
 	bool _motor_trim_valid{false};
 	bool _motor_output_limited{false};
 	bool _pressure_ramp_complete{false};
-	bool _trim_retreat_active{false};
 	float _active_pressure_gain{0.f};
 	uint8_t _limiting_motor{0};
 	float _search_trim_required_s{0.f};
 	float _approach_trim_required_s{0.f};
-	float _trim_retreat_start_z{0.f};
 	uint8_t _contact_threshold_frames{0};
 	uint8_t _heading_reset_counter{0};
 	hrt_abstime _search_started{0};
 	uint16_t _last_top_distance_sequence{0};
 	hrt_abstime _verify_started{0};
-	hrt_abstime _motor_trim_match_started{0};
-	hrt_abstime _motor_trim_match_stable_started{0};
-	hrt_abstime _motor_trim_wait_last_update{0};
 	hrt_abstime _press_started{0};
 	hrt_abstime _press_output_started{0};
 	hrt_abstime _pressure_ramp_started{0};
-	hrt_abstime _trim_hold_started{0};
-	hrt_abstime _trim_retreat_started{0};
 	hrt_abstime _handover_started{0};
 	hrt_abstime _last_status_publish{0};
 
