@@ -74,6 +74,8 @@ void StickAccelerationXY::resetAcceleration(const matrix::Vector2f &acceleration
 	if (acceleration.isAllFinite()) {
 		_acceleration_slew_rate_x.setForcedValue(acceleration(0));
 		_acceleration_slew_rate_y.setForcedValue(acceleration(1));
+		// 与 seed 保持一致，避免 applyJerkLimit 中 dir 算出 0 导致 jerk 被冻结在旧值上
+		_acceleration_setpoint_prev = acceleration;
 	}
 }
 

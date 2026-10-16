@@ -45,19 +45,29 @@ bool FlightTaskManualAcceleration::activate(const trajectory_setpoint_s &last_se
 
 	_stick_acceleration_xy.resetPosition();
 
-	if (Vector2f(last_setpoint.velocity).isAllFinite()) {
-		_stick_acceleration_xy.resetVelocity(Vector2f(last_setpoint.velocity));
+	// 接管时保留当前真实水平速度，避免引用 OFFBOARD 末帧速度 setpoint 引起的阶跃；
+	// 同时做有限值检查和模长限幅，避免 EKF 瞬时速度异常偏大导致接管后继承过大速度目标
+	Vector2f velocity_sp = _velocity.xy();
+
+	if (!velocity_sp.isAllFinite()) {
+		velocity_sp.setZero();
 
 	} else {
-		_stick_acceleration_xy.resetVelocity(_velocity.xy());
+		// 室内保护起点，可根据实际机型调整；不用 MPC_VEL_MANUAL(如 10 m/s) 这种普通人工上限直接当接管保护限幅
+		const float takeover_velocity_limit = math::min(_param_mpc_vel_manual.get(), 2.0f);
+
+		const float speed = velocity_sp.norm();
+
+		if (speed > takeover_velocity_limit && speed > FLT_EPSILON) {
+			velocity_sp *= takeover_velocity_limit / speed;
+		}
 	}
 
-	if (Vector2f(last_setpoint.acceleration).isAllFinite()) {
-		_stick_acceleration_xy.resetAcceleration(Vector2f(last_setpoint.acceleration));
+	_stick_acceleration_xy.resetVelocity(velocity_sp);
 
-	} else {
-		_stick_acceleration_xy.resetAcceleration(_acceleration.xy());
-	}
+	// 接管时水平加速度目标强制为 0，不继承 OFFBOARD 末帧加速度、不使用瞬时 EKF 加速度，
+	// 由 calculateDrag 阻尼逐渐刹车，速度归零后 lockPosition 自动锁当前点
+	_stick_acceleration_xy.resetAcceleration(Vector2f(0.f, 0.f));
 
 	return ret;
 }

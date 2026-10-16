@@ -1178,9 +1178,25 @@ MavlinkReceiver::fill_offboard_control_mode(const trajectory_setpoint_s &setpoin
 	return ocm;
 }
 
+bool MavlinkReceiver::custom_action_owns_offboard()
+{
+	custom_action_status_s status{};
+	const hrt_abstime now = hrt_absolute_time();
+
+	return _custom_action_status_sub.copy(&status)
+	       && status.timestamp != 0
+	       && now >= status.timestamp
+	       && now - status.timestamp <= 500_ms
+	       && (status.control_owner == custom_action_status_s::OWNER_CUSTOM
+		   || status.control_owner == custom_action_status_s::OWNER_HANDOVER);
+}
+
 void
 MavlinkReceiver::handle_message_set_position_target_local_ned(mavlink_message_t *msg)
 {
+	if (custom_action_owns_offboard()) {
+		return;
+	}
 	mavlink_set_position_target_local_ned_t target_local_ned;
 	mavlink_msg_set_position_target_local_ned_decode(msg, &target_local_ned);
 
@@ -1298,6 +1314,9 @@ MavlinkReceiver::handle_message_set_position_target_local_ned(mavlink_message_t 
 void
 MavlinkReceiver::handle_message_set_position_target_global_int(mavlink_message_t *msg)
 {
+	if (custom_action_owns_offboard()) {
+		return;
+	}
 	mavlink_set_position_target_global_int_t target_global_int;
 	mavlink_msg_set_position_target_global_int_decode(msg, &target_global_int);
 
@@ -1797,6 +1816,9 @@ void MavlinkReceiver::fill_thrust(float *thrust_body_array, uint8_t vehicle_type
 void
 MavlinkReceiver::handle_message_set_attitude_target(mavlink_message_t *msg)
 {
+	if (custom_action_owns_offboard()) {
+		return;
+	}
 	mavlink_set_attitude_target_t attitude_target;
 	mavlink_msg_set_attitude_target_decode(msg, &attitude_target);
 

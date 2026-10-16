@@ -71,6 +71,7 @@
 #include <uORB/topics/esc_status.h>
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/camera_status.h>
+#include <uORB/topics/custom_action_status.h>
 #include <uORB/topics/cellular_status.h>
 #include <uORB/topics/differential_pressure.h>
 #include <uORB/topics/distance_sensor.h>
@@ -279,6 +280,7 @@ private:
 	void schedule_tune(const char *tune);
 
 	void update_message_statistics(const mavlink_message_t &message);
+	bool custom_action_owns_offboard();
 	void update_rx_stats(const mavlink_message_t &message);
 
 	void publish_hil_battery();
@@ -418,6 +420,7 @@ private:
 	uORB::Subscription	_vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription	_vehicle_global_position_sub{ORB_ID(vehicle_global_position)};
 	uORB::Subscription	_vehicle_status_sub{ORB_ID(vehicle_status)};
+	uORB::Subscription	_custom_action_status_sub{ORB_ID(custom_action_status)};
 	uint8_t			_vehicle_type_bitmask{0}; ///< cached from vehicle_status; vehicle type requires reboot to change
 	uORB::Subscription	_autotune_attitude_control_status_sub{ORB_ID(autotune_attitude_control_status)};
 
